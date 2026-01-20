@@ -133,45 +133,49 @@ Artisan::command('clients:import', function () {
     ->addOption('chunk', null, InputOption::VALUE_OPTIONAL, 'Taille du chunk (lignes lues à la fois), ex: 1000', 1000)
     ->addOption('batch', null, InputOption::VALUE_OPTIONAL, 'Taille du batch SQL (insert), ex: 500', 500);
 
-/**
- * Retourne un mapping de colonnes, ex: ['A' => 'nom_entreprise', 'B' => 'adresse_municipale', ...]
- *
- * @return array<string,string>
- */
-function getImportColumnMap(Worksheet $sheet, array $allowedFields): array
-{
-    $highestColumn = $sheet->getHighestDataColumn(1);
-    $headerRange = "A1:{$highestColumn}1";
-    $headerRow = $sheet->rangeToArray($headerRange, null, true, true, true)[1] ?? [];
+if (!function_exists('getImportColumnMap')) {
+    /**
+     * Retourne un mapping de colonnes, ex: ['A' => 'nom_entreprise', 'B' => 'adresse_municipale', ...]
+     *
+     * @return array<string,string>
+     */
+    function getImportColumnMap(Worksheet $sheet, array $allowedFields): array
+    {
+        $highestColumn = $sheet->getHighestDataColumn(1);
+        $headerRange = "A1:{$highestColumn}1";
+        $headerRow = $sheet->rangeToArray($headerRange, null, true, true, true)[1] ?? [];
 
-    $columns = [];
-    foreach ($headerRow as $columnLetter => $columnName) {
-        if (!is_string($columnName)) {
-            continue;
+        $columns = [];
+        foreach ($headerRow as $columnLetter => $columnName) {
+            if (!is_string($columnName)) {
+                continue;
+            }
+
+            $normalized = trim($columnName);
+            if ($normalized === '') {
+                continue;
+            }
+
+            if (in_array($normalized, $allowedFields, true)) {
+                $columns[$columnLetter] = $normalized;
+            }
         }
 
-        $normalized = trim($columnName);
-        if ($normalized === '') {
-            continue;
-        }
-
-        if (in_array($normalized, $allowedFields, true)) {
-            $columns[$columnLetter] = $normalized;
-        }
+        return $columns;
     }
-
-    return $columns;
 }
 
-class RowRangeReadFilter implements IReadFilter
-{
-    public function __construct(
-        private readonly int $startRow,
-        private readonly int $endRow,
-    ) {}
-
-    public function readCell($columnAddress, $row, $worksheetName = ''): bool
+if (!class_exists(RowRangeReadFilter::class)) {
+    class RowRangeReadFilter implements IReadFilter
     {
-        return $row >= $this->startRow && $row <= $this->endRow;
+        public function __construct(
+            private readonly int $startRow,
+            private readonly int $endRow,
+        ) {}
+
+        public function readCell($columnAddress, $row, $worksheetName = ''): bool
+        {
+            return $row >= $this->startRow && $row <= $this->endRow;
+        }
     }
 }
