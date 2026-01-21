@@ -266,9 +266,13 @@ class ClientController extends Controller
         ]);
     }
 
-    public function recherchePerNomEntreprise(Request $request, $nomEntreprise)
+    public function recherchePerNomEntreprise(Request $request)
     {
-        $clients = Client::where('nom_entreprise', 'LIKE', '%' . $nomEntreprise . '%')
+        $nomEntreprise = $request->query('q');
+
+        $clients = Client::when($nomEntreprise, function ($query) use ($nomEntreprise) {
+            $query->where('nom_entreprise', 'LIKE', '%' . $nomEntreprise . '%');
+        })
             ->orderBy('id')
             ->get();
 

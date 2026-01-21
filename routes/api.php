@@ -27,4 +27,4 @@ Route::get('/clients/duplicates-completsv2', [ClientController::class, 'getCombi
 Route::get('/clients/doublons-nom-courriel', [ClientController::class, 'getDuplicatesByNameAndEmail']);
 
 // Recherche de clients par nom d'entreprise
-Route::get('/clients/recherche-par-nom-entreprise/{nomEntreprise}', [ClientController::class, 'recherchePerNomEntreprise']);
+Route::get('/clients/recherche', [ClientController::class, 'recherchePerNomEntreprise']);
