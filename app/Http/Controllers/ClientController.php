@@ -232,4 +232,46 @@ class ClientController extends Controller
             'clients' => $clients,
         ]);
     }
+
+    public function getDuplicatesByNameAndEmail()
+    {
+        // 1️⃣ Groupes en doublon (nom_entreprise + courriel)
+        $groups = Client::select(
+            'nom_entreprise',
+            'courriel',
+            DB::raw('COUNT(*) as total')
+        )
+            ->whereNotNull('nom_entreprise')
+            ->whereNotNull('courriel')
+            ->groupBy('nom_entreprise', 'courriel')
+            ->having('total', '>', 1)
+            ->orderBy('nom_entreprise')
+            ->get();
+
+        // 2️⃣ Détails des clients appartenant à ces groupes
+        $clients = Client::whereIn(
+            DB::raw("CONCAT(nom_entreprise,'|',courriel)"),
+            $groups->map(fn($g) =>
+                $g->nom_entreprise . '|' . $g->courriel)
+        )
+            ->orderBy('nom_entreprise')
+            ->orderBy('courriel')
+            ->get();
+
+        return response()->json([
+            'total_groupes_doublons' => $groups->count(),
+            'total_clients' => $clients->count(),
+            'groupes' => $groups,  // clés + total par groupe
+            'clients' => $clients,  // détail complet
+        ]);
+    }
+
+    public function recherchePerNomEntreprise(Request $request, $nomEntreprise)
+    {
+        $clients = Client::where('nom_entreprise', 'LIKE', '%' . $nomEntreprise . '%')
+            ->orderBy('id')
+            ->get();
+
+        return response()->json($clients);
+    }
 }

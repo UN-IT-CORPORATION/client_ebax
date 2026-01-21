@@ -22,3 +22,9 @@ Route::get('/clients/duplicates-completsv1', [ClientController::class, 'getDupli
 
 // Listes des doublons  complete v2
 Route::get('/clients/duplicates-completsv2', [ClientController::class, 'getCombinedDuplicates']);
+
+// routes/api.php
+Route::get('/clients/doublons-nom-courriel', [ClientController::class, 'getDuplicatesByNameAndEmail']);
+
+// Recherche de clients par nom d'entreprise
+Route::get('/clients/recherche-par-nom-entreprise/{nomEntreprise}', [ClientController::class, 'recherchePerNomEntreprise']);
