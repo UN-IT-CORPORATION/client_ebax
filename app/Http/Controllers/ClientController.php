@@ -276,6 +276,12 @@ class ClientController extends Controller
             ->orderBy('id')
             ->get();
 
+        if (!$clients->count()) {
+            return response()->json([
+                'message' => "Aucun client trouvé pour le nom d'entreprise spécifié."
+            ], 404);
+        }
+
         return response()->json($clients);
     }
 }
