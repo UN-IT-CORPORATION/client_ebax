@@ -93,4 +93,61 @@ class ClientController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Retourne la liste des doublons complets dans la base de données clients.
+     * Détecte les doublons où nom_entreprise + téléphone + courriel sont identiques.
+     */
+    public function duplicatesComplets(Request $request)
+    {
+        // Détection des doublons par combinaison complète (nom_entreprise + téléphone + courriel)
+        $duplicateGroups = Client::selectRaw('
+                nom_entreprise,
+                telephone,
+                courriel,
+                COUNT(*) as nombre_doublons,
+                GROUP_CONCAT(id ORDER BY id) as client_ids
+            ')
+            ->whereNotNull('nom_entreprise')
+            ->where('nom_entreprise', '!=', '')
+            ->whereNotNull('telephone')
+            ->where('telephone', '!=', '')
+            ->whereNotNull('courriel')
+            ->where('courriel', '!=', '')
+            ->groupBy('nom_entreprise', 'telephone', 'courriel')
+            ->having('nombre_doublons', '>', 1)
+            ->orderBy('nombre_doublons', 'desc')
+            ->get();
+
+        // Récupérer les détails complets pour chaque groupe de doublons
+        $doublonsDetails = [];
+        $totalDoublons = 0;
+
+        foreach ($duplicateGroups as $group) {
+            $clients = Client::where('nom_entreprise', $group->nom_entreprise)
+                ->where('telephone', $group->telephone)
+                ->where('courriel', $group->courriel)
+                ->orderBy('id')
+                ->get();
+
+            $doublonsDetails[] = [
+                'nom_entreprise' => $group->nom_entreprise,
+                'telephone' => $group->telephone,
+                'courriel' => $group->courriel,
+                'nombre_doublons' => $group->nombre_doublons,
+                'clients' => $clients
+            ];
+
+            $totalDoublons += $group->nombre_doublons;
+        }
+
+        return response()->json([
+            'resume' => [
+                'nombre_groupes_doublons' => $duplicateGroups->count(),
+                'total_doublons' => $totalDoublons,
+                'moyenne_doublons_par_groupe' => $duplicateGroups->count() > 0 ? round($totalDoublons / $duplicateGroups->count(), 2) : 0
+            ],
+            'doublons' => $doublonsDetails
+        ]);
+    }
 }

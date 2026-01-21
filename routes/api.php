@@ -13,3 +13,6 @@ Route::get('/clients', [ClientController::class, 'index']);
 
 // Liste des doublons dans la base de données clients
 Route::get('/clients/duplicates', [ClientController::class, 'duplicates']);
+
+// Liste des doublons complets (nom_entreprise + téléphone + courriel identiques)
+Route::get('/clients/duplicates-complets', [ClientController::class, 'duplicatesComplets']);
