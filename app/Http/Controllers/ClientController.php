@@ -150,4 +150,51 @@ class ClientController extends Controller
             'doublons' => $doublonsDetails
         ]);
     }
+
+    // veriosn  2
+    public function getDuplicates()
+    {
+        // 🔹 Doublons par nom_entreprise
+        $nomDoublons = Client::whereIn('nom_entreprise', function ($query) {
+            $query
+                ->select('nom_entreprise')
+                ->from('clients')
+                ->whereNotNull('nom_entreprise')
+                ->groupBy('nom_entreprise')
+                ->havingRaw('COUNT(*) > 1');
+        })->get();
+
+        // 🔹 Doublons par telephone
+        $telephoneDoublons = Client::whereIn('telephone', function ($query) {
+            $query
+                ->select('telephone')
+                ->from('clients')
+                ->whereNotNull('telephone')
+                ->groupBy('telephone')
+                ->havingRaw('COUNT(*) > 1');
+        })->get();
+
+        // 🔹 Doublons par courriel
+        $courrielDoublons = Client::whereIn('courriel', function ($query) {
+            $query
+                ->select('courriel')
+                ->from('clients')
+                ->whereNotNull('courriel')
+                ->groupBy('courriel')
+                ->havingRaw('COUNT(*) > 1');
+        })->get();
+
+        return response()->json([
+            'doublons' => [
+                'nom_entreprise' => $nomDoublons,
+                'telephone' => $telephoneDoublons,
+                'courriel' => $courrielDoublons,
+            ],
+            'counts' => [
+                'nom_entreprise' => $nomDoublons->count(),
+                'telephone' => $telephoneDoublons->count(),
+                'courriel' => $courrielDoublons->count(),
+            ]
+        ]);
+    }
 }

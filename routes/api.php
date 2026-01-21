@@ -16,3 +16,6 @@ Route::get('/clients/duplicates', [ClientController::class, 'duplicates']);
 
 // Liste des doublons complets (nom_entreprise + téléphone + courriel identiques)
 Route::get('/clients/duplicates-complets', [ClientController::class, 'duplicatesComplets']);
+
+// Liste des doublons complets (nom_entreprise + téléphone + courriel identiques)
+Route::get('/clients/duplicates-completsv1', [ClientController::class, 'getDuplicates']);
