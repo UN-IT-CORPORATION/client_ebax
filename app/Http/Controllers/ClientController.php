@@ -197,4 +197,37 @@ class ClientController extends Controller
             ]
         ]);
     }
+
+    public function getCombinedDuplicates()
+    {
+        // 1️⃣ Identifier les combinaisons dupliquées
+        $duplicateKeys = Client::select(
+            'nom_entreprise',
+            'telephone',
+            'courriel',
+            DB::raw('COUNT(*) as total')
+        )
+            ->whereNotNull('nom_entreprise')
+            ->whereNotNull('telephone')
+            ->whereNotNull('courriel')
+            ->groupBy('nom_entreprise', 'telephone', 'courriel')
+            ->having('total', '>', 1)
+            ->get();
+
+        // 2️⃣ Récupérer tous les clients appartenant à ces combinaisons
+        $clients = Client::whereIn(
+            DB::raw("CONCAT(nom_entreprise,'|',telephone,'|',courriel)"),
+            $duplicateKeys->map(fn($d) =>
+                $d->nom_entreprise . '|' . $d->telephone . '|' . $d->courriel)
+        )
+            ->orderBy('nom_entreprise')
+            ->get();
+
+        return response()->json([
+            'total_groupes_doublons' => $duplicateKeys->count(),
+            'total_clients' => $clients->count(),
+            'groupes' => $duplicateKeys,
+            'clients' => $clients,
+        ]);
+    }
 }
